@@ -1,0 +1,9 @@
+{
+  "status": "historical_unverified",
+  "values_in_readme": {
+    "before": "~38%",
+    "stage2": "~57%",
+    "stage4_distill": "~66%"
+  },
+  "reason": "No matching executable benchmark output was found in the checked-in notebook; these values are not treated as measured results."
+}
