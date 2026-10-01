@@ -124,6 +124,25 @@ def token_count(dataset, tokenizer, batch_size=32):
     return int(total)
 
 
+def cap_dataset_by_tokens(dataset, tokenizer, max_tokens):
+    if max_tokens is None:
+        return dataset
+
+    kept=[]
+    total=0
+    for index, text in enumerate(dataset["text"]):
+        length=len(tokenizer(str(text), add_special_tokens=True)["input_ids"])
+        if kept and total + length > int(max_tokens):
+            break
+        kept.append(index)
+        total += length
+
+    if not kept:
+        raise ValueError("max_train_tokens is smaller than the first example.")
+
+    return dataset.select(kept)
+
+
 def teacher_token_count(records, tokenizer):
     total = 0
     for row in records:
@@ -222,6 +241,9 @@ def train_one(
             cfg,
         )
 
+    max_train_tokens=config.get("budget",{}).get("max_train_tokens")
+    dataset=cap_dataset_by_tokens(dataset, tokenizer, max_train_tokens)
+
     if torch.cuda.is_available():
         torch.cuda.reset_peak_memory_stats()
 
@@ -286,6 +308,8 @@ def train_one(
 
     stage_record = {
         "stage": stage,
+        "budget_mode": config.get("budget",{}).get("mode","report_only"),
+        "max_train_tokens": config.get("budget",{}).get("max_train_tokens"),
         "examples": len(dataset),
         "train_tokens": train_tokens,
         "teacher_tokens": teacher_tokens,
