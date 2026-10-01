@@ -1,0 +1,14 @@
+{
+  "$schema":"https://json-schema.org/draft/2020-12/schema",
+  "type":"object",
+  "required":["experiment_id","model","method","stage_order","teacher_models","train_examples","train_tokens","eval_examples"],
+  "properties":{
+    "experiment_id":{"type":"string"},"model":{"type":"string"},"method":{"type":"string"},
+    "stage_order":{"type":"array","items":{"type":"string"}},
+    "teacher_models":{"type":"array","items":{"type":"string"}},
+    "train_examples":{"type":"integer","minimum":0},"train_tokens":{"type":"integer","minimum":0},
+    "eval_examples":{"type":"integer","minimum":0},
+    "accuracy":{"type":["number","null"]},"pass_rate":{"type":["number","null"]},"compile_rate":{"type":["number","null"]},
+    "training_time_hours":{"type":["number","null"]},"inference_latency_ms":{"type":["number","null"]},"gpu_memory_gb":{"type":["number","null"]}
+  }
+}
