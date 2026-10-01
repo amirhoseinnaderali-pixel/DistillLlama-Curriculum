@@ -6,8 +6,8 @@
     "experiment_id":{"type":"string"},"model":{"type":"string"},"method":{"type":"string"},
     "stage_order":{"type":"array","items":{"type":"string"}},
     "teacher_models":{"type":"array","items":{"type":"string"}},
-    "train_examples":{"type":"integer","minimum":0},"train_tokens":{"type":"integer","minimum":0},
-    "eval_examples":{"type":"integer","minimum":0},
+    "train_examples":{"type":"integer","minimum":0},"train_tokens":{"type":["integer","null"],"minimum":0},
+    "eval_examples":{"type":["integer","null"],"minimum":0},
     "accuracy":{"type":["number","null"]},"pass_rate":{"type":["number","null"]},"compile_rate":{"type":["number","null"]},
     "training_time_hours":{"type":["number","null"]},"inference_latency_ms":{"type":["number","null"]},"gpu_memory_gb":{"type":["number","null"]}
   }
