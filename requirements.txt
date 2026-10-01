@@ -1,0 +1,12 @@
+torch
+transformers
+datasets
+accelerate
+peft
+bitsandbytes
+trl
+unsloth
+pyyaml
+pytest
+google-genai
+openai

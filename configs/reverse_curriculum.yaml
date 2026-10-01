@@ -1,0 +1,31 @@
+experiment_id: curriculum_reverse_v1
+method: curriculum_reverse
+seed: 0
+model:
+  base_model: unsloth/DeepSeek-R1-Distill-Llama-8B-unsloth-bnb-4bit
+curriculum:
+  mode: reverse
+  stages: [foundation, algorithms, debugging, advanced]
+stage_overrides:
+  algorithms:
+    difficulty_filter: true
+training:
+  stage_defaults:
+    max_seq_length: 2048
+    batch_size: 1
+    gradient_accumulation_steps: 16
+    epochs: 1
+    learning_rate: 0.0002
+    warmup_steps: 50
+    fp16: true
+    lora_r: 32
+    lora_alpha: 64
+    lora_dropout: 0.05
+distillation:
+  enabled: false
+budget:
+  mode: report_only
+  max_train_tokens: null
+
+runtime:
+  output_root: runs/curriculum_reverse_v1
