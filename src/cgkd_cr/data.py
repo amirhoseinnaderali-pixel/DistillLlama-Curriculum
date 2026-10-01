@@ -17,7 +17,7 @@ def load_stage_dataset(stage,config):
         ds=load_dataset("json",data_files=override.get("ioi_json_path","ioi_multi_view.json"),split="train")
     else:
         ds=load_dataset(override.get("dataset",STAGES[stage]["dataset"]),split=override.get("split","train"))
-    if stage=="algorithms" and override.get("difficulty_filter",True):
+    if stage=="algorithms" and override.get("difficulty_filter",True) and not override.get("use_local_ioi"):
         ds=ds.filter(lambda x:x.get("difficulty") in ["introductory","interview"])
     if stage=="algorithms" and override.get("ioi_only",False) and not override.get("use_local_ioi"):
         ds=ds.filter(is_ioi_like)
@@ -40,7 +40,7 @@ def format_supervised_example(stage,example,target=None):
     elif stage=="algorithms":
         user=algorithm_view_text(example); answer=target if target is not None else (example.get("solutions",["# Solution unavailable"])[0] if example.get("solutions") else "# Solution unavailable"); system="You are an algorithms expert who solves programming problems rigorously."
     elif stage=="debugging":
-        user=f"Review this code:\nPYTHON_START\n{example.get('code','')}\nPYTHON_END\nIssue: {example.get('query','')}"; answer=target if target is not None else f"Issues:\n{example.get('feedback','')}\n\nCorrected code:\n{example.get('corrected_code','')}"; system="You are a code review and debugging expert."
+        fence=chr(96)*3; user=f"Review this code:\n{fence}python\n{example.get('code','')}\n{fence}\nIssue: {example.get('query','')}"; answer=target if target is not None else f"Issues:\n{example.get('feedback','')}\n\nCorrected code:\n{fence}python\n{example.get('corrected_code','')}\n{fence}"; system="You are a code review and debugging expert."
     elif stage=="advanced":
         user,answer,system=example.get("instruction",""),target if target is not None else example.get("response",""),"You are an expert programmer with strong code reasoning ability."
     else: raise KeyError(stage)
