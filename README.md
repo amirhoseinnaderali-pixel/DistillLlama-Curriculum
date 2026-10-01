@@ -2,30 +2,58 @@
 
 ## Curriculum-Guided Knowledge Distillation for Efficient Code Reasoning in Small Language Models
 
-Research-grade experimental framework for testing whether curriculum-guided training and response-level teacher supervision improve code reasoning in a small language model.
+CGKD-CR is a research-grade experimental framework for testing whether curriculum-guided training and response-level teacher supervision improve code reasoning in a small language model.
 
-Research status: this refactor adds a framework and does not present new validated benchmark results.
+Research status: the repository currently defines the protocol and implementation. No new benchmark result from this refactor is presented as validated evidence.
 
-## Research question
+## Abstract
 
-Can curriculum-guided fine-tuning combined with response-level teacher supervision improve code-reasoning performance compared with matched single-stage SFT and with each component evaluated separately?
+The project converts a four-stage coding fine-tuning notebook into a controlled experimental framework. The central design separates curriculum and teacher supervision so that the effects of supervised fine-tuning, response-level distillation, curriculum ordering, and their combination can be measured under explicitly reported training budgets.
 
-## Current method
+## Research Question
 
-The intended curriculum is:
+Can curriculum-guided fine-tuning combined with response-level teacher supervision improve code reasoning in a small language model compared with matched single-stage SFT and with each component evaluated separately?
+
+## Hypotheses
+
+- H1 — Curriculum: staged training improves code-reasoning performance over single-stage mixed-data SFT under a matched budget.
+- H2 — Distillation: teacher-generated target responses improve reasoning quality relative to ordinary SFT when student data and budget are controlled.
+- H3 — Interaction: curriculum and teacher supervision provide complementary effects.
+- H4 — Stage ordering: changing the order of capability-specific stages changes final performance.
+- H5 — Efficiency: the student provides an empirically useful quality/inference-cost trade-off relative to stronger reference models.
+
+All hypotheses remain hypotheses until measured.
+
+## Motivation
+
+The legacy repository already combined LoRA fine-tuning, four capability stages, code datasets, and teacher-generated supervision. The missing research layer was attribution: without explicit controls, a final score cannot tell whether improvement came from data volume, data order, teacher supervision, or their interaction.
+
+## Method
+
+The student is unsloth/DeepSeek-R1-Distill-Llama-8B-unsloth-bnb-4bit with LoRA/PEFT. The teacher pathway is response-level supervision: a teacher generates target text and the student is trained on that target. It is not logit-level knowledge distillation.
+
+The legacy curriculum is:
 
 Foundation → Algorithms → Debugging → Advanced Reasoning
 
-Student model:
-unsloth/DeepSeek-R1-Distill-Llama-8B-unsloth-bnb-4bit
+## Curriculum Design
 
-Training:
-LoRA/PEFT with configuration-driven stages.
+| Stage | Dataset | Intended capability |
+|---|---|---|
+| Foundation | iamtarun/python_code_instructions_18k_alpaca | instruction following and basic code generation |
+| Algorithms | codeparrot/apps | algorithmic problem solving |
+| Debugging | m-a-p/Code-Feedback | bug diagnosis and repair |
+| Advanced | ise-uiuc/Magicoder-Evol-Instruct-110K | broader coding and reasoning |
 
-Important terminology:
-the teacher pathway is response-level supervision. A teacher generates target text, and the student is trained on those targets. It is not logit-level distillation.
+Research variants include ordered, random, reverse, and partial/leave-one-stage-out curricula.
 
-## Experimental matrix
+## Knowledge Distillation
+
+Teacher metadata is recorded with each generated sample: source dataset, stable problem/example ID, stage, teacher model, generation parameters, teacher response, source fields, and quality/status metadata.
+
+## Experimental Setup
+
+### Central 2 × 2 matrix
 
 | Method | Curriculum | Teacher supervision | LoRA |
 |---|---:|---:|---:|
@@ -34,76 +62,94 @@ the teacher pathway is response-level supervision. A teacher generates target te
 | Curriculum | Yes | No | Yes |
 | CGKD-CR | Yes | Yes | Yes |
 
-Additional stage-order, stage-removal, teacher-diversity, and training-budget ablations are described in docs/experimental_matrix.md.
-
-## Evaluation
-
-Separate training metrics from reasoning metrics.
-
-Reasoning:
-- compilation
-- execution/test pass
-- first-pass correctness
-- pass@k where multiple generations exist
-- algorithm/debugging/code-generation capability scores
-- error categories
-
-Efficiency:
-- trainable parameters
-- training time
-- GPU memory
-- inference latency
-- tokens/sec
-- model size
-
-## Data integrity
-
-The leakage audit is currently Not yet fully audited. No clean-evaluation claim should be made until overlap and contamination checks are recorded.
-
-Distilled records carry teacher/model/generation/source metadata.
-
-## Configuration
+## Baselines
 
 - configs/sft_baseline.yaml
 - configs/distillation.yaml
 - configs/curriculum.yaml
 - configs/cgkd_cr.yaml
 
-The notebook is only a demonstration layer. Experiments should run from scripts and configs.
+## Ablation Studies
 
-## Usage
+Current configs also provide random and reverse curriculum. The next documented ablations are stage removal, stage-order sensitivity, one versus multiple teachers, teacher prompt changes, teacher strength, LoRA rank, learning rate, epochs, and data-volume controls.
+
+See docs/ablation_plan.md.
+
+## Evaluation
+
+Training metrics: training loss, optimizer/global steps, training time, training token count, peak GPU memory.
+
+Code reasoning metrics: syntax/compile success, execution/test pass, solve/pass rate when a harness exists, first-pass correctness, pass@k where multiple generations are available, and capability-specific scores.
+
+Efficiency metrics: parameter count, trainable parameter count, training time, inference latency, tokens/sec when measured, and GPU memory.
+
+Evaluation inputs are expected to be unseen. The local ioi_multi_view.json is treated as training-source material unless an explicit contamination audit establishes otherwise.
+
+## Results
+
+No new scientific result is claimed by this refactor. Result records use results/schema.json. Unmeasured fields remain null, and planned runs remain Pending evaluation.
+
+## Capability Transfer
+
+The protocol evaluates capability slices before and after curriculum stages to identify transfer and forgetting. See docs/capability_transfer.md.
+
+## Error Analysis
+
+The taxonomy includes algorithmic misunderstanding, reasoning failure, hallucinated API/code, syntax, compilation, runtime, wrong algorithm, off-by-one, incomplete solution, timeout, memory failure, and training-style overfitting. See docs/error_analysis.md.
+
+## Compute Efficiency
+
+Budget accounting reports training examples, training tokens, teacher target tokens when consistently measurable, optimizer steps, wall-clock time, GPU memory, and trainable parameters. See docs/compute_budget.md.
+
+## Reproducibility
 
 Install: pip install -r requirements.txt
 
 Tests: PYTHONPATH=src pytest -q
 
-Inspect data: PYTHONPATH=src python scripts/prepare_data.py --config configs/cgkd_cr.yaml
-
-Generate teacher supervision: PYTHONPATH=src python scripts/generate_distillation_data.py --config configs/cgkd_cr.yaml --stage algorithms --teacher gemini-2.5-pro --max-samples 200 --output runs/cgkd_cr_v1/algorithms.jsonl
-
-Train: PYTHONPATH=src python scripts/train.py --config configs/curriculum.yaml
-
 Dry run: PYTHONPATH=src python scripts/run_experiment.py --config configs/cgkd_cr.yaml --dry-run
 
-Evaluate: PYTHONPATH=src python scripts/evaluate.py --predictions runs/predictions.jsonl --output runs/eval.json
+Train: PYTHONPATH=src python scripts/train.py --config configs/cgkd_cr.yaml
 
-## Existing results
+Generate teacher data: PYTHONPATH=src python scripts/generate_distillation_data.py --config configs/distillation.yaml --stage algorithms --teacher gemini-2.5-pro --max-samples 200 --output runs/distillation/algorithms.jsonl
 
-The previous README contained indicative/sample metrics. They are not carried forward as validated results. No new benchmark result was generated by this refactor.
+Evaluate: PYTHONPATH=src python scripts/evaluate.py --predictions runs/predictions.jsonl --output runs/evaluation.json
 
-## Layout
+Plot stage losses: python scripts/plot_learning_curves.py --manifest runs/cgkd_cr_v1/run_manifest.json --output results/cgkd_cr_loss.png
 
-src/cgkd_cr/ — core research framework
-scripts/ — reproducible entry points
-configs/ — experiment conditions
-docs/ — research protocol and paper draft
-results/schema.json — machine-readable result contract
-Colab_Curriculum_Finetune.ipynb — optional demonstration
+Run the leakage and credential audits before publishing results.
 
 ## Limitations
 
-- response-level rather than logit-level distillation
-- incomplete contamination audit
-- possible teacher/API version drift
-- no statistical-significance claim until repeated runs exist
-- execution evaluation must use a trusted benchmark harness
+- response-level rather than logit-level KD
+- evaluation quality depends on the supplied benchmark/test runner
+- contamination must be audited against the exact train/eval artifacts
+- external teacher/API versions may drift
+- repeated seeds are required for statistical claims
+- arbitrary generated-code evaluation should run in an isolated environment
+
+## Scientific Integrity
+
+Never fabricate benchmark scores, improvements, significance tests, teacher/student comparisons, efficiency gains, or novelty claims.
+
+Use statuses: measured, pending_experiment, not_yet_evaluated, failed.
+
+## Citation
+
+Add a formal citation only after project metadata and experimental results are finalized.
+
+## Repository Rename
+
+Target repository name: curriculum-guided-knowledge-distillation-code-reasoning
+
+The available GitHub write interface can modify branches and repository contents but does not expose the repository-rename endpoint. The actual GitHub rename still needs to be performed from repository Settings by the owner.
+
+## Repository Layout
+
+- src/cgkd_cr/ — core framework
+- scripts/ — reproducible entry points
+- configs/ — experiment conditions
+- docs/ — research protocol and audits
+- results/ — generated result artifacts
+- tests/ — unit tests
+- Colab_Curriculum_Finetune.ipynb — optional notebook interface
