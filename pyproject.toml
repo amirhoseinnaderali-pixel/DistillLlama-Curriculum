@@ -7,7 +7,7 @@ name = "cgkd-cr"
 version = "0.1.0"
 description = "Controlled research framework for curriculum-guided response-level teacher supervision in code reasoning."
 requires-python = ">=3.10"
-dependencies = ["torch", "transformers", "datasets", "accelerate", "peft", "bitsandbytes", "trl", "unsloth", "pyyaml"]
+dependencies = ["torch", "transformers", "datasets", "accelerate", "peft", "bitsandbytes", "trl", "unsloth", "pyyaml", "google-genai", "openai"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
