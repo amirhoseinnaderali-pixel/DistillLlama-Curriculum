@@ -1,6 +1,5 @@
 from __future__ import annotations
 import hashlib,json
-from datasets import load_dataset
 
 STAGES={
  "foundation":{"dataset":"iamtarun/python_code_instructions_18k_alpaca","task_type":"python_instruction_following"},
@@ -11,6 +10,7 @@ STAGES={
 def is_ioi_like(example):
     return "ioi" in " ".join(str(example.get(k,"")) for k in ("question","title","source","tags","url")).lower()
 def load_stage_dataset(stage,config):
+    from datasets import load_dataset
     if stage not in STAGES: raise KeyError(stage)
     override=config.get("stage_overrides",{}).get(stage,{})
     if stage=="algorithms" and override.get("use_local_ioi"):
