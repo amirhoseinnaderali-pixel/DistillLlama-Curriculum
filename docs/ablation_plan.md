@@ -2,7 +2,8 @@
 
 ## Tier 1 — Core causal matrix
 
-Run with the same student, evaluation split, prompt format, and matched training/token budgets:
+Run with the same student, evaluation split, prompt format, seed policy, and explicit
+training/token budgets:
 
 1. SFT baseline
 2. Distillation baseline
@@ -17,7 +18,11 @@ These four cells answer the primary component and interaction questions.
 6. Reverse curriculum
 7. Remove one stage at a time
 
-These experiments test whether the ordered progression matters and which stage contributes.
+Current leave-one-stage-out examples are:
+- configs/curriculum_no_debugging.yaml
+- configs/curriculum_no_advanced.yaml
+
+Add the remaining stage-removal conditions using the same protocol.
 
 ## Tier 3 — Teacher effects
 
@@ -25,7 +30,8 @@ These experiments test whether the ordered progression matters and which stage c
 9. Weaker vs stronger teacher
 10. Teacher prompt/temperature sensitivity
 
-These experiments test whether the source of teacher supervision changes outcomes.
+Teacher generation settings and per-sample provenance must remain fixed except for the
+factor being studied.
 
 ## Tier 4 — Training sensitivity
 
@@ -34,8 +40,18 @@ These experiments test whether the source of teacher supervision changes outcome
 13. Data volume
 14. Epochs
 
-Only vary one factor at a time after the core matrix is established.
+Only vary one factor at a time after the Tier-1 matrix is established.
+
+## Budget policy
+
+The configs declare budget.mode and budget.max_train_tokens. Setting a common
+max_train_tokens enables an explicit token-budget control; leaving it null records the
+observed budget without enforcing a cap.
+
+Report examples, tokens, teacher target tokens, optimizer steps, wall-clock time, and GPU
+memory for every run.
 
 ## Repetition policy
 
-Repeat the Tier 1 conditions with additional seeds when compute allows. Report mean and dispersion rather than a single-run number when repeated runs exist.
+Repeat Tier-1 conditions with additional seeds when compute allows. Report mean and
+dispersion rather than a single-run number when repeated runs exist.
