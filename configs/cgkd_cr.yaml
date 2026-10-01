@@ -28,5 +28,9 @@ distillation:
   max_samples: null
   max_tokens: 1024
   temperature: 0.7
+budget:
+  mode: report_only
+  max_train_tokens: null
+
 runtime:
   output_root: runs/cgkd_cr_v1
