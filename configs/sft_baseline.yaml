@@ -25,5 +25,9 @@ training:
 distillation:
   enabled: false
   teacher_model: null
+budget:
+  mode: report_only
+  max_train_tokens: null
+
 runtime:
   output_root: runs/sft_baseline_v1
