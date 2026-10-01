@@ -1,0 +1,5 @@
+base_model: unsloth/DeepSeek-R1-Distill-Llama-8B-unsloth-bnb-4bit
+max_new_tokens: 384
+temperature: 0.0
+do_sample: false
+tests_file: benchmarks/coding_tasks.json
