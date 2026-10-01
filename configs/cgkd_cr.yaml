@@ -25,7 +25,7 @@ training:
 distillation:
   enabled: true
   teacher_model: gemini-2.5-pro
-  max_samples: 200
+  max_samples: null
   max_tokens: 1024
   temperature: 0.7
 runtime:
