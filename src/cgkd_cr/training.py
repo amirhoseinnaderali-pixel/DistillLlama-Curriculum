@@ -15,10 +15,54 @@ def attach_lora(FastLanguageModel,model,cfg):
 def make_trainer(model,tokenizer,dataset,cfg):
     from transformers import TrainingArguments
     from trl import SFTTrainer
-    args=TrainingArguments(output_dir=cfg["output_dir"],per_device_train_batch_size=cfg["batch_size"],gradient_accumulation_steps=cfg["gradient_accumulation_steps"],num_train_epochs=cfg["epochs"],learning_rate=cfg["learning_rate"],warmup_steps=cfg.get("warmup_steps",0),fp16=cfg.get("fp16",True),logging_steps=cfg.get("logging_steps",10),optim=cfg.get("optim","adamw_8bit"),weight_decay=cfg.get("weight_decay",0.01),lr_scheduler_type=cfg.get("lr_scheduler_type","cosine"),save_strategy=cfg.get("save_strategy","epoch"),save_total_limit=cfg.get("save_total_limit",2),dataloader_num_workers=0,dataloader_pin_memory=False,report_to="none")
-    kwargs=dict(model=model,train_dataset=dataset,args=args,dataset_text_field="text",max_seq_length=cfg["max_seq_length"])
-    try: return SFTTrainer(tokenizer=tokenizer,**kwargs)
-    except TypeError: return SFTTrainer(processing_class=tokenizer,**kwargs)
+    try:
+        from trl import SFTConfig
+        args=SFTConfig(
+            output_dir=cfg["output_dir"],
+            per_device_train_batch_size=cfg["batch_size"],
+            gradient_accumulation_steps=cfg["gradient_accumulation_steps"],
+            num_train_epochs=cfg["epochs"],
+            learning_rate=cfg["learning_rate"],
+            warmup_steps=cfg.get("warmup_steps",0),
+            fp16=cfg.get("fp16",True),
+            logging_steps=cfg.get("logging_steps",10),
+            optim=cfg.get("optim","adamw_8bit"),
+            weight_decay=cfg.get("weight_decay",0.01),
+            lr_scheduler_type=cfg.get("lr_scheduler_type","cosine"),
+            save_strategy=cfg.get("save_strategy","epoch"),
+            save_total_limit=cfg.get("save_total_limit",2),
+            report_to="none",
+            dataset_text_field="text",
+            max_length=cfg["max_seq_length"],
+        )
+        return SFTTrainer(model=model,train_dataset=dataset,args=args,processing_class=tokenizer)
+    except (ImportError,TypeError):
+        args=TrainingArguments(
+            output_dir=cfg["output_dir"],
+            per_device_train_batch_size=cfg["batch_size"],
+            gradient_accumulation_steps=cfg["gradient_accumulation_steps"],
+            num_train_epochs=cfg["epochs"],
+            learning_rate=cfg["learning_rate"],
+            warmup_steps=cfg.get("warmup_steps",0),
+            fp16=cfg.get("fp16",True),
+            logging_steps=cfg.get("logging_steps",10),
+            optim=cfg.get("optim","adamw_8bit"),
+            weight_decay=cfg.get("weight_decay",0.01),
+            lr_scheduler_type=cfg.get("lr_scheduler_type","cosine"),
+            save_strategy=cfg.get("save_strategy","epoch"),
+            save_total_limit=cfg.get("save_total_limit",2),
+            dataloader_num_workers=0,
+            dataloader_pin_memory=False,
+            report_to="none",
+        )
+        return SFTTrainer(
+            model=model,
+            train_dataset=dataset,
+            args=args,
+            tokenizer=tokenizer,
+            dataset_text_field="text",
+            max_seq_length=cfg["max_seq_length"],
+        )
 def train_experiment(config):
     set_seed(int(config.get("seed",0))); base_model=config["model"]["base_model"]; order=resolve_stage_order(config); teacher_enabled=bool(config.get("distillation",{}).get("enabled")); teacher=config.get("distillation",{}).get("teacher_model"); root=Path(config["runtime"]["output_root"]); previous=None; records=[]; started=time.perf_counter()
     def prepared(stage,ds):
